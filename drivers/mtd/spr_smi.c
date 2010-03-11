@@ -60,11 +60,11 @@ static struct flash_dev flash_ids[] = {
  */
 static void smi_wait_xfer_finish(int timeout)
 {
-	while (timeout--) {
+	do {
 		if (readl(&smicntl->smi_sr) & TFF)
 			break;
 		udelay(1000);
-	}
+	} while (timeout--);
 }
 
 /*
@@ -215,11 +215,11 @@ static int smi_write_enable(int bank)
 	/* Restore the CTRL REG1 state */
 	writel(ctrlreg1, &smicntl->smi_cr1);
 
-	while (timeout--) {
+	do {
 		if (smi_read_sr(bank) & (1 << (bank + WM_SHIFT)))
 			break;
 		udelay(1000);
-	}
+	} while (timeout--);
 
 	if (timeout)
 		return 0;
