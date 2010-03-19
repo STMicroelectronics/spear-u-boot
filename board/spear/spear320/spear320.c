@@ -61,5 +61,9 @@ int board_nand_init(struct nand_chip *nand)
 
 int board_eth_init(bd_t *bis)
 {
-	return dw_mii_initialize(0, CONFIG_SPEAR_ETHBASE);
+	dw_mii_initialize(0, CONFIG_SPEAR_ETHBASE);
+
+	macb_eth_initialize(0, (void *)CONFIG_SYS_MACB0_BASE, CONFIG_MACB0_PHY);
+
+	return 0;
 }
