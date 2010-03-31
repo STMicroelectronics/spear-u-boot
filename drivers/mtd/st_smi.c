@@ -27,7 +27,7 @@
 
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
-#include <asm/arch/spr_smi.h>
+#include "st_smi.h"
 
 #if !defined(CONFIG_SYS_NO_FLASH)
 
