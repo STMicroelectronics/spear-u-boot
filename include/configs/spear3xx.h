@@ -133,6 +133,10 @@
 
 #endif
 
+/* NAND flash configuration */
+#define CONFIG_BOARD_NAND_SP			1
+#define CONFIG_BOARD_NAND_8BIT			1
+
 #if defined(CONFIG_SPEAR300)
 #define CONFIG_SYS_NAND_BASE			(0x80000000)
 

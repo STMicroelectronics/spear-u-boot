@@ -28,7 +28,8 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/spr_defs.h>
 #include <asm/arch/spr_misc.h>
-#include <asm/arch/spr_nand.h>
+
+int fsmc_nand_init(struct nand_chip *nand);
 
 int board_init(void)
 {
@@ -48,7 +49,7 @@ int board_nand_init(struct nand_chip *nand)
 	    (struct misc_regs *)CONFIG_SPEAR_MISCBASE;
 
 	if (!(readl(&misc_regs_p->auto_cfg_reg) & MISC_NANDDIS))
-		return spear_nand_init(nand);
+		return fsmc_nand_init(nand);
 
 	return -1;
 }
