@@ -29,14 +29,13 @@
 
 #include <usbdevice.h>
 #include "ep0.h"
-#include <usb/spr_udc.h>
+#include <usb/dw_udc.h>
 #include <asm/arch/hardware.h>
-#include <asm/arch/spr_misc.h>
 
 #define UDC_INIT_MDELAY		80	/* Device settle delay */
 
 /* Some kind of debugging output... */
-#ifndef DEBUG_SPRUSBTTY
+#ifndef DEBUG_DWUSBTTY
 #define UDCDBG(str)
 #define UDCDBGA(fmt, args...)
 #else
@@ -251,7 +250,7 @@ static void usbputpcktofifo(int epNum, u8 *bufp, u32 len)
 }
 
 /*
- * spear_write_noniso_tx_fifo - Write the next packet to TxFIFO.
+ * dw_write_noniso_tx_fifo - Write the next packet to TxFIFO.
  * @endpoint:		Endpoint pointer.
  *
  * If the endpoint has an active tx_urb, then the next packet of data from the
@@ -263,7 +262,7 @@ static void usbputpcktofifo(int epNum, u8 *bufp, u32 len)
  * transmitted in this packet.
  *
  */
-static void spear_write_noniso_tx_fifo(struct usb_endpoint_instance
+static void dw_write_noniso_tx_fifo(struct usb_endpoint_instance
 				       *endpoint)
 {
 	struct urb *urb = endpoint->tx_urb;
@@ -307,7 +306,7 @@ static void spear_write_noniso_tx_fifo(struct usb_endpoint_instance
  * Handle SETUP USB interrupt.
  * This function implements TRM Figure 14-14.
  */
-static void spear_udc_setup(struct usb_endpoint_instance *endpoint)
+static void dw_udc_setup(struct usb_endpoint_instance *endpoint)
 {
 	u8 *datap = (u8 *)&ep0_urb->device_request;
 	int ep_addr = endpoint->endpoint_address;
@@ -344,11 +343,11 @@ static void spear_udc_setup(struct usb_endpoint_instance *endpoint)
 		endpoint->tx_urb = ep0_urb;
 		endpoint->sent = 0;
 		/*
-		 * Write packet data to the FIFO.  spear_write_noniso_tx_fifo
+		 * Write packet data to the FIFO.  dw_write_noniso_tx_fifo
 		 * will update endpoint->last with the number of bytes written
 		 * to the FIFO.
 		 */
-		spear_write_noniso_tx_fifo(endpoint);
+		dw_write_noniso_tx_fifo(endpoint);
 
 		writel(0x0, &inep_regs_p[ep_addr].write_done);
 	}
@@ -361,7 +360,7 @@ static void spear_udc_setup(struct usb_endpoint_instance *endpoint)
 /*
  * Handle endpoint 0 RX interrupt
  */
-static void spear_udc_ep0_rx(struct usb_endpoint_instance *endpoint)
+static void dw_udc_ep0_rx(struct usb_endpoint_instance *endpoint)
 {
 	u8 dummy[64];
 
@@ -395,7 +394,7 @@ static void spear_udc_ep0_rx(struct usb_endpoint_instance *endpoint)
 /*
  * Handle endpoint 0 TX interrupt
  */
-static void spear_udc_ep0_tx(struct usb_endpoint_instance *endpoint)
+static void dw_udc_ep0_tx(struct usb_endpoint_instance *endpoint)
 {
 	struct usb_device_request *request = &ep0_urb->device_request;
 	int ep_addr;
@@ -444,7 +443,7 @@ static void spear_udc_ep0_tx(struct usb_endpoint_instance *endpoint)
 			 * need a zero-length terminating packet.
 			 */
 			UDCDBG("ACK control read data stage packet");
-			spear_write_noniso_tx_fifo(endpoint);
+			dw_write_noniso_tx_fifo(endpoint);
 
 			ep_addr = endpoint->endpoint_address;
 			writel(0x0, &inep_regs_p[ep_addr].write_done);
@@ -452,7 +451,7 @@ static void spear_udc_ep0_tx(struct usb_endpoint_instance *endpoint)
 	}
 }
 
-static struct usb_endpoint_instance *spear_find_ep(int ep)
+static struct usb_endpoint_instance *dw_find_ep(int ep)
 {
 	int i;
 
@@ -469,11 +468,11 @@ static struct usb_endpoint_instance *spear_find_ep(int ep)
  * The ep argument is a physical endpoint number for a non-ISO IN endpoint
  * in the range 1 to 15.
  */
-static void spear_udc_epn_rx(int ep)
+static void dw_udc_epn_rx(int ep)
 {
 	int nbytes = 0;
 	struct urb *urb;
-	struct usb_endpoint_instance *endpoint = spear_find_ep(ep);
+	struct usb_endpoint_instance *endpoint = dw_find_ep(ep);
 
 	if (endpoint) {
 		urb = endpoint->rcv_urb;
@@ -494,20 +493,28 @@ static void spear_udc_epn_rx(int ep)
  * The ep argument is a physical endpoint number for a non-ISO IN endpoint
  * in the range 16 to 30.
  */
-static void spear_udc_epn_tx(int ep)
+static void dw_udc_epn_tx(int ep)
 {
-	struct usb_endpoint_instance *endpoint = spear_find_ep(ep);
+	struct usb_endpoint_instance *endpoint = dw_find_ep(ep);
+
+	if (!endpoint)
+		return;
 
 	/*
 	 * We need to transmit a terminating zero-length packet now if
 	 * we have sent all of the data in this URB and the transfer
 	 * size was an exact multiple of the packet size.
 	 */
-	if (endpoint && endpoint->tx_urb && endpoint->tx_urb->actual_length) {
-		if (endpoint->last == endpoint->tx_packetSize) {
-			/* handle zero length packet here */
-			writel(0x0, &inep_regs_p[ep].write_done);
-		}
+	if (endpoint->tx_urb &&
+	    (endpoint->last == endpoint->tx_packetSize) &&
+	    (endpoint->tx_urb->actual_length - endpoint->sent -
+	     endpoint->last == 0)) {
+		/* handle zero length packet here */
+		writel(0x0, &inep_regs_p[ep].write_done);
+
+	}
+
+	if (endpoint->tx_urb && endpoint->tx_urb->actual_length) {
 		/* retire the data that was just sent */
 		usbd_tx_complete(endpoint);
 		/*
@@ -516,7 +523,7 @@ static void spear_udc_epn_tx(int ep)
 		 */
 		if (endpoint->tx_urb && endpoint->tx_urb->actual_length) {
 			/* write data to FIFO */
-			spear_write_noniso_tx_fifo(endpoint);
+			dw_write_noniso_tx_fifo(endpoint);
 			writel(0x0, &inep_regs_p[ep].write_done);
 
 		} else if (endpoint->tx_urb
@@ -549,8 +556,6 @@ int udc_init(void)
 
 	readl(&plug_regs_p->plug_pending);
 
-	udc_disconnect();
-
 	for (i = 0; i < UDC_INIT_MDELAY; i++)
 		udelay(1000);
 
@@ -562,10 +567,9 @@ int udc_init(void)
 	writel(~0x0, &udc_regs_p->endp_int_mask);
 
 	writel(DEV_CONF_FS_SPEED | DEV_CONF_REMWAKEUP | DEV_CONF_SELFPOW |
-	       /* Dev_Conf_SYNCFRAME | */
 	       DEV_CONF_PHYINT_16, &udc_regs_p->dev_conf);
 
-	writel(0x0, &udc_regs_p->dev_cntl);
+	writel(DEV_CNTL_SD, &udc_regs_p->dev_cntl);
 
 	/* Clear all interrupts pending */
 	writel(DEV_INT_MSK, &udc_regs_p->dev_int);
@@ -588,6 +592,9 @@ void udc_setup_ep(struct usb_device_instance *device,
 	int attributes;
 	char *tt;
 	u32 endp_intmask;
+
+	if ((ep != 0) && (udc_device->device_state < STATE_ADDRESSED))
+		return;
 
 	tt = getenv("usbtty");
 	if (!tt)
@@ -648,9 +655,6 @@ void udc_setup_ep(struct usb_device_instance *device,
 		writel(packet_size | ((buffer_size / sizeof(int)) << 16),
 		       &out_p->endp_maxpacksize);
 
-		writel((packet_size << 19) | ENDP_EPTYPE_CNTL,
-		       &udc_regs_p->udc_endp_reg[ep_num]);
-
 	} else if ((ep_addr & USB_ENDPOINT_DIR_MASK) == USB_DIR_IN) {
 		/* Setup the IN endpoint */
 		writel(0x0, &in_p->endp_status);
@@ -709,7 +713,17 @@ void udc_setup_ep(struct usb_device_instance *device,
 /* Turn on the USB connection by enabling the pullup resistor */
 void udc_connect(void)
 {
-	u32 plug_st;
+	u32 plug_st, dev_cntl;
+
+	dev_cntl = readl(&udc_regs_p->dev_cntl);
+	dev_cntl |= DEV_CNTL_SD;
+	writel(dev_cntl, &udc_regs_p->dev_cntl);
+
+	udelay(1000);
+
+	dev_cntl = readl(&udc_regs_p->dev_cntl);
+	dev_cntl &= ~DEV_CNTL_SD;
+	writel(dev_cntl, &udc_regs_p->dev_cntl);
 
 	plug_st = readl(&plug_regs_p->plug_state);
 	plug_st &= ~(PLUG_STATUS_PHY_RESET | PLUG_STATUS_PHY_MODE);
@@ -720,6 +734,8 @@ void udc_connect(void)
 void udc_disconnect(void)
 {
 	u32 plug_st;
+
+	writel(DEV_CNTL_SD, &udc_regs_p->dev_cntl);
 
 	plug_st = readl(&plug_regs_p->plug_state);
 	plug_st |= (PLUG_STATUS_PHY_RESET | PLUG_STATUS_PHY_MODE);
@@ -765,7 +781,7 @@ void udc_startup_events(struct usb_device_instance *device)
 	 * DEVICE_HUB_CONFIGURED and DEVICE_RESET events here.
 	 * DEVICE_HUB_CONFIGURED causes a transition to the state STATE_POWERED,
 	 * and DEVICE_RESET causes a transition to the state STATE_DEFAULT.
-	 * The SPEAr USB client controller has the capability to detect when the
+	 * The DW USB client controller has the capability to detect when the
 	 * USB cable is connected to a powered USB bus, so we will defer the
 	 * DEVICE_HUB_CONFIGURED and DEVICE_RESET events until later.
 	 */
@@ -776,7 +792,7 @@ void udc_startup_events(struct usb_device_instance *device)
 /*
  * Plug detection interrupt handling
  */
-void spear_udc_plug_irq(void)
+void dw_udc_plug_irq(void)
 {
 	if (readl(&plug_regs_p->plug_state) & PLUG_STATUS_ATTACHED) {
 		/*
@@ -790,11 +806,6 @@ void spear_udc_plug_irq(void)
 		UDCDBG("device attached and powered");
 		udc_state_transition(udc_device->device_state, STATE_POWERED);
 	} else {
-		/*
-		 * USB cable detached
-		 * Reset the PHY and switch the mode.
-		 */
-		udc_disconnect();
 		writel(~0x0, &udc_regs_p->dev_int_mask);
 
 		UDCDBG("device detached or unpowered");
@@ -805,17 +816,22 @@ void spear_udc_plug_irq(void)
 /*
  * Device interrupt handling
  */
-void spear_udc_dev_irq(void)
+void dw_udc_dev_irq(void)
 {
 	if (readl(&udc_regs_p->dev_int) & DEV_INT_USBRESET) {
 		writel(~0x0, &udc_regs_p->endp_int_mask);
-
-		udc_connect();
 
 		writel(readl(&inep_regs_p[0].endp_cntl) | ENDP_CNTL_FLUSH,
 		       &inep_regs_p[0].endp_cntl);
 
 		writel(DEV_INT_USBRESET, &udc_regs_p->dev_int);
+
+		/*
+		 * This endpoint0 specific register can be programmed only
+		 * after the phy clock is initialized
+		 */
+		writel((EP0_MAX_PACKET_SIZE << 19) | ENDP_EPTYPE_CNTL,
+				&udc_regs_p->udc_endp_reg[0]);
 
 		UDCDBG("device reset in progess");
 		udc_state_transition(udc_device->device_state, STATE_DEFAULT);
@@ -870,7 +886,7 @@ void spear_udc_dev_irq(void)
 /*
  * Endpoint interrupt handling
  */
-void spear_udc_endpoint_irq(void)
+void dw_udc_endpoint_irq(void)
 {
 	while (readl(&udc_regs_p->endp_int) & ENDP0_INT_CTRLOUT) {
 
@@ -878,13 +894,13 @@ void spear_udc_endpoint_irq(void)
 
 		if ((readl(&outep_regs_p[0].endp_status) & ENDP_STATUS_OUTMSK)
 		    == ENDP_STATUS_OUT_SETUP) {
-			spear_udc_setup(udc_device->bus->endpoint_array + 0);
+			dw_udc_setup(udc_device->bus->endpoint_array + 0);
 			writel(ENDP_STATUS_OUT_SETUP,
 			       &outep_regs_p[0].endp_status);
 
 		} else if ((readl(&outep_regs_p[0].endp_status) &
 			    ENDP_STATUS_OUTMSK) == ENDP_STATUS_OUT_DATA) {
-			spear_udc_ep0_rx(udc_device->bus->endpoint_array + 0);
+			dw_udc_ep0_rx(udc_device->bus->endpoint_array + 0);
 			writel(ENDP_STATUS_OUT_DATA,
 			       &outep_regs_p[0].endp_status);
 
@@ -897,13 +913,13 @@ void spear_udc_endpoint_irq(void)
 	}
 
 	if (readl(&udc_regs_p->endp_int) & ENDP0_INT_CTRLIN) {
-		spear_udc_ep0_tx(udc_device->bus->endpoint_array + 0);
+		dw_udc_ep0_tx(udc_device->bus->endpoint_array + 0);
 
 		writel(ENDP_STATUS_IN, &inep_regs_p[0].endp_status);
 		writel(ENDP0_INT_CTRLIN, &udc_regs_p->endp_int);
 	}
 
-	while (readl(&udc_regs_p->endp_int) & ENDP_INT_NONISOOUT_MSK) {
+	if (readl(&udc_regs_p->endp_int) & ENDP_INT_NONISOOUT_MSK) {
 		u32 epnum = 0;
 		u32 ep_int = readl(&udc_regs_p->endp_int) &
 		    ENDP_INT_NONISOOUT_MSK;
@@ -919,7 +935,7 @@ void spear_udc_endpoint_irq(void)
 		if ((readl(&outep_regs_p[epnum].endp_status) &
 		     ENDP_STATUS_OUTMSK) == ENDP_STATUS_OUT_DATA) {
 
-			spear_udc_epn_rx(epnum);
+			dw_udc_epn_rx(epnum);
 			writel(ENDP_STATUS_OUT_DATA,
 			       &outep_regs_p[epnum].endp_status);
 		} else if ((readl(&outep_regs_p[epnum].endp_status) &
@@ -941,7 +957,7 @@ void spear_udc_endpoint_irq(void)
 		if (readl(&inep_regs_p[epnum].endp_status) & ENDP_STATUS_IN) {
 			writel(ENDP_STATUS_IN,
 			       &outep_regs_p[epnum].endp_status);
-			spear_udc_epn_tx(epnum);
+			dw_udc_epn_tx(epnum);
 
 			writel(ENDP_STATUS_IN,
 			       &outep_regs_p[epnum].endp_status);
@@ -963,13 +979,13 @@ void udc_irq(void)
 	 * host requests.
 	 */
 	while (readl(&plug_regs_p->plug_pending))
-		spear_udc_plug_irq();
+		dw_udc_plug_irq();
 
 	while (readl(&udc_regs_p->dev_int))
-		spear_udc_dev_irq();
+		dw_udc_dev_irq();
 
 	if (readl(&udc_regs_p->endp_int))
-		spear_udc_endpoint_irq();
+		dw_udc_endpoint_irq();
 }
 
 /* Flow control */

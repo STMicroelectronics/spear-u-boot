@@ -21,8 +21,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __SPR_UDC_H
-#define __SPR_UDC_H
+#ifndef __DW_UDC_H
+#define __DW_UDC_H
 
 /*
  * Defines for  USBD
@@ -116,7 +116,7 @@ struct udc_regs {
 #define  DEV_CNTL_TSHLDEN		0x00000080
 #define  DEV_CNTL_BURSTEN		0x00000100
 #define  DEV_CNTL_DMAMODE		0x00000200
-#define  DEV_CNTL_SOFTDISCONNECT	0x00000400
+#define  DEV_CNTL_SD			0x00000400
 #define  DEV_CNTL_SCALEDOWN		0x00000800
 #define  DEV_CNTL_BURSTLENU		0x00010000
 #define  DEV_CNTL_BURSTLENMSK		0x00ff0000
@@ -227,4 +227,4 @@ void udc_startup_events(struct usb_device_instance *device);
 void udc_setup_ep(struct usb_device_instance *device, unsigned int ep,
 		  struct usb_endpoint_instance *endpoint);
 
-#endif /* __SPR_UDC_H */
+#endif /* __DW_UDC_H */

@@ -33,7 +33,7 @@
 #define CONFIG_PHY_RESET_DELAY			(10000)		/* in usec */
 
 /* USBD driver configuration */
-#define CONFIG_SPEARUDC
+#define CONFIG_DW_UDC
 #define CONFIG_USB_DEVICE
 #define CONFIG_USB_TTY
 
