@@ -29,14 +29,21 @@ extern void set_bit(int nr, volatile void * addr);
 
 extern void clear_bit(int nr, volatile void * addr);
 
-extern void change_bit(int nr, volatile void * addr);
-
 static inline void __change_bit(int nr, volatile void *addr)
 {
 	unsigned long mask = BIT_MASK(nr);
 	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
 
 	*p ^= mask;
+}
+
+static inline void change_bit(int nr, volatile void *addr)
+{
+	unsigned long flags;
+
+	local_irq_save(flags);
+	__change_bit(nr, addr);
+	local_irq_restore(flags);
 }
 
 static inline int __test_and_set_bit(int nr, volatile void *addr)
