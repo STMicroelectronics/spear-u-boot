@@ -3053,6 +3053,12 @@ spear320_config :	unconfig
 spear600_config :	unconfig
 	@$(MKCONFIG) -n $@ -t $(@:_config=) spear6xx arm arm926ejs $(@:_config=) spear spear
 
+spear1300_config \
+spear1300_nand_config \
+spear1300_usbtty_config \
+spear1300_usbtty_nand_config :	unconfig
+	@$(MKCONFIG) -n $@ -t $(@:_config=) spear13xx arm arm_cortexa8 spear1300 spear spear13xx
+
 suen3_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs km_arm keymile kirkwood
 

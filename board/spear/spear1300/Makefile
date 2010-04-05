@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2006
+# (C) Copyright 2000-2004
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
@@ -23,20 +23,10 @@
 
 include $(TOPDIR)/config.mk
 
-ifneq ($(OBJTREE),$(SRCTREE))
-$(shell mkdir -p $(obj)board/$(VENDOR)/common)
-endif
+LIB	= $(obj)lib$(BOARD).a
 
-LIB	= $(obj)lib$(VENDOR).a
-
-COBJS-$(CONFIG_SPEAR3XX) += spr_misc.o
-COBJS-$(CONFIG_SPEAR600) += spr_misc.o
-
-SOBJS-$(CONFIG_SPEAR3XX) += spr_lowlevel_init.o
-SOBJS-$(CONFIG_SPEAR600) += spr_lowlevel_init.o
-
-COBJS	:= $(COBJS-y)
-SOBJS	:= $(SOBJS-y)
+COBJS	:= spear1300.o
+SOBJS	:= spr_lowlevel_init.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
@@ -52,7 +42,8 @@ distclean:	clean
 	rm -f $(LIB) core *.bak $(obj).depend
 
 #########################################################################
-# This is for $(obj).depend target
+
+# defines $(obj).depend target
 include $(SRCTREE)/rules.mk
 
 sinclude $(obj).depend

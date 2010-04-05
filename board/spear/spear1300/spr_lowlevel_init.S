@@ -1,6 +1,6 @@
 /*
- * (C) Copyright 2009
- * Vipin Kumar, STMicroelectronics, <vipin.kumar@st.com>
+ * (C) Copyright 2006
+ * Vipin Kumar, ST Micoelectronics, vipin.kumar@st.com.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -12,7 +12,7 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -21,20 +21,18 @@
  * MA 02111-1307 USA
  */
 
-#ifndef _ASM_ARCH_HARDWARE_H
-#define _ASM_ARCH_HARDWARE_H
+#include <config.h>
 
-#define CONFIG_SYS_USBD_BASE			(0xE3800000)
-#define CONFIG_SYS_PLUG_BASE			(0xE2800000)
-#define CONFIG_SYS_FIFO_BASE			(0xE3000800)
-#define CONFIG_SYS_SMI_BASE			(0xEA000000)
-#define CONFIG_SPEAR_TIMERBASE			(0xE0380000)
-#define CONFIG_SPEAR_MISCBASE			(0xE0700000)
-#define CONFIG_SYS_I2C_BASE			(0xE0280000)
-#define CONFIG_SPEAR_ETHBASE			(0xE2000000)
-#define CONFIG_SYS_FSMC_BASE			(0xB0000000)
-
-#define CONFIG_SYS_NAND_CLE			(1 << 16)
-#define CONFIG_SYS_NAND_ALE			(1 << 17)
-
-#endif /* _ASM_ARCH_HARDWARE_H */
+/*
+ * platform specific initializations are already done in Xloader
+ * Initializations already done include
+ * DDR, PLLs, IP's clock enable and reset release etc
+ */
+.globl lowlevel_init
+lowlevel_init:
+	/* By default, U-Boot switches CPU to low-vector */
+	/* Revert this as we work in high vector even in U-Boot */
+	mrc	p15, 0, r0, c1, c0, 0
+	orr	r0, r0, #0x00002000
+	mcr	p15, 0, r0, c1, c0, 0
+	mov	pc, lr
