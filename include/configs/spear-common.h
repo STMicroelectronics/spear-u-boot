@@ -47,7 +47,6 @@
 
 /* Timer, HZ specific defines */
 #define CONFIG_SYS_HZ				(1000)
-#define CONFIG_SYS_HZ_CLOCK			(8300000)
 
 /* Flash configuration */
 #if defined(CONFIG_FLASH_PNOR)
@@ -168,6 +167,8 @@
 #define CONFIG_ENV_SIZE				0x02000
 
 /* Miscellaneous configurable options */
+#define CONFIG_ARCH_CPU_INIT			1
+#define CONFIG_DISPLAY_CPUINFO			1
 #define CONFIG_BOOT_PARAMS_ADDR			0x00000100
 #define CONFIG_CMDLINE_TAG			1
 #define CONFIG_SETUP_MEMORY_TAGS		1

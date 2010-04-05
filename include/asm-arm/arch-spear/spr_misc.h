@@ -126,5 +126,10 @@ struct misc_regs {
 
 /* PERIPH1_CLKEN, PERIPH1_RST value */
 #define MISC_USBDENB			0x01000000
+#define MISC_ETHENB			0x00800000
+#define MISC_SMIENB			0x00200000
+#define MISC_FSMCENB			0x00000200
+#define MISC_I2CENB			0x00000080
+#define MISC_UART0ENB			0x00000008
 
 #endif
