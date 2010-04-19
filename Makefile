@@ -3059,10 +3059,10 @@ spear320_usbtty_config \
 spear320_usbtty_nand_config :	unconfig
 	@$(MKCONFIG) -n $@ -t $(@:_config=) spear3xx arm arm926ejs $(@:_config=) spear spear
 
-spear600_config :	unconfig
 spear600_nand_config \
 spear600_usbtty_config \
 spear600_usbtty_nand_config \
+spear600_config :	unconfig
 	@$(MKCONFIG) -n $@ -t $(@:_config=) spear6xx arm arm926ejs $(@:_config=) spear spear
 
 spear1300_config \
