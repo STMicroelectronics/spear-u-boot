@@ -27,18 +27,7 @@ TEXT_BASE = 0x00700000
 
 ALL += $(obj)u-boot.img
 
-# Environment variables in NAND
-ifeq ($(ENV),NAND)
-PLATFORM_RELFLAGS += -DCONFIG_ENV_IS_IN_NAND
-else
-PLATFORM_RELFLAGS += -DCONFIG_ENV_IS_IN_FLASH
-endif
-
 # Support parallel flash
 ifeq ($(FLASH),PNOR)
 PLATFORM_RELFLAGS += -DCONFIG_FLASH_PNOR
-endif
-
-ifeq ($(CONSOLE),USB)
-PLATFORM_RELFLAGS += -DCONFIG_SPEAR_USBTTY
 endif

@@ -30,6 +30,16 @@
  */
 #define CONFIG_SPEAR600				1
 
+#if defined(CONFIG_MK_usbtty)
+#define CONFIG_SPEAR_USBTTY			1
+#endif
+
+#if defined(CONFIG_MK_nand)
+#define CONFIG_ENV_IS_IN_NAND			1
+#else
+#define CONFIG_ENV_IS_IN_FLASH			1
+#endif
+
 #include <configs/spear-common.h>
 
 /* Serial Configuration (PL011) */
