@@ -23,6 +23,7 @@
  */
 
 #include <common.h>
+#include <netdev.h>
 #include <nand.h>
 #include <asm/io.h>
 #include <linux/mtd/fsmc_nand.h>
@@ -57,4 +58,13 @@ int board_nand_init(struct nand_chip *nand)
 	}
 #endif
 	return -1;
+}
+
+int board_eth_init(bd_t *bis)
+{
+#if defined(CONFIG_DESIGNWARE_ETH)
+	return designware_initialize(0, CONFIG_SPEAR_ETHBASE, CONFIG_DW0_PHY);
+#else
+	return -1;
+#endif
 }
