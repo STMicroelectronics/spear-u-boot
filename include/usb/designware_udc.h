@@ -197,6 +197,9 @@ struct udcfifo_regs {
 #define  UDC_INT_PACKET_SIZE		64
 #define  UDC_OUT_ENDPOINT		2
 #define  UDC_BULK_PACKET_SIZE		64
+#if defined(CONFIG_USBD_HS)
+#define  UDC_BULK_HS_PACKET_SIZE	512
+#endif
 #define  UDC_IN_ENDPOINT		3
 #define  UDC_OUT_PACKET_SIZE		64
 #define  UDC_IN_PACKET_SIZE		64

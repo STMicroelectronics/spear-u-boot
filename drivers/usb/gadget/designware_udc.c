@@ -566,7 +566,7 @@ int udc_init(void)
 	writel(~0x0, &udc_regs_p->dev_int_mask);
 	writel(~0x0, &udc_regs_p->endp_int_mask);
 
-	writel(DEV_CONF_FS_SPEED | DEV_CONF_REMWAKEUP | DEV_CONF_SELFPOW |
+	writel(DEV_CONF_HS_SPEED | DEV_CONF_REMWAKEUP | DEV_CONF_SELFPOW |
 	       DEV_CONF_PHYINT_16, &udc_regs_p->dev_conf);
 
 	writel(DEV_CNTL_SOFTDISCONNECT, &udc_regs_p->dev_cntl);
@@ -575,6 +575,11 @@ int udc_init(void)
 	writel(DEV_INT_MSK, &udc_regs_p->dev_int);
 
 	return 0;
+}
+
+int is_usbd_high_speed(void)
+{
+	return (readl(&udc_regs_p->dev_stat) & DEV_STAT_ENUM) ? 0 : 1;
 }
 
 /*
@@ -792,7 +797,7 @@ void udc_startup_events(struct usb_device_instance *device)
 /*
  * Plug detection interrupt handling
  */
-void dw_udc_plug_irq(void)
+static void dw_udc_plug_irq(void)
 {
 	if (readl(&plug_regs_p->plug_state) & PLUG_STATUS_ATTACHED) {
 		/*
@@ -816,7 +821,7 @@ void dw_udc_plug_irq(void)
 /*
  * Device interrupt handling
  */
-void dw_udc_dev_irq(void)
+static void dw_udc_dev_irq(void)
 {
 	if (readl(&udc_regs_p->dev_int) & DEV_INT_USBRESET) {
 		writel(~0x0, &udc_regs_p->endp_int_mask);
@@ -886,7 +891,7 @@ void dw_udc_dev_irq(void)
 /*
  * Endpoint interrupt handling
  */
-void dw_udc_endpoint_irq(void)
+static void dw_udc_endpoint_irq(void)
 {
 	while (readl(&udc_regs_p->endp_int) & ENDP0_INT_CTRLOUT) {
 
