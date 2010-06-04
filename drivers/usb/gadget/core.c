@@ -212,6 +212,20 @@ struct usb_device_descriptor *usbd_device_device_descriptor (struct usb_device_i
 	return (device->device_descriptor);
 }
 
+#if defined(CONFIG_USBD_HS)
+/**
+ * usbd_device_qualifier_descriptor
+ * @device: which device
+ * @port: which port
+ *
+ * Return the specified qualifier descriptor for the specified device.
+ */
+struct usb_qualifier_descriptor *usbd_device_qualifier_descriptor (struct
+		usb_device_instance *device, int port)
+{
+	return device->qualifier_descriptor;
+}
+#endif
 
 /**
  * usbd_device_configuration_descriptor
