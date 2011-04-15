@@ -53,8 +53,13 @@ int arch_cpu_init(void)
 #endif
 
 #if defined(CONFIG_DESIGNWARE_ETH)
-	writel(PHY_IF_GMII | CLK_SEL_PLL2, &misc_p->gmac_clk_cfg);
+	misc_p->perip1_sw_rst |= GETH_CLKEN;
+	if (machine_is_spearR1801E())
+		writel(PHY_IF_RGMII | CLK_SEL_PLL2, &misc_p->gmac_clk_cfg);
+	else
+		writel(PHY_IF_GMII | CLK_SEL_PLL2, &misc_p->gmac_clk_cfg);
 	perip1_clk_enb |= GETH_CLKEN;
+	misc_p->perip1_sw_rst &= ~GETH_CLKEN;
 #endif
 
 #if defined(CONFIG_DW_UDC)

@@ -3085,6 +3085,11 @@ spear900_usbtty_config \
 spear900_usbtty_nand_config :	unconfig
 	@$(MKCONFIG) -n $@ -t $(@:_config=) spear13xx_evb arm arm_cortexa8 spear900 spear spear13xx
 
+spearR1801e_config \
+spearR1801e_nand_config \
+spearR1801e_usbtty_config \
+spearR1801e_usbtty_nand_config :	unconfig
+	@$(MKCONFIG) -n $@ -t $(@:_config=) spearR1801e_evb arm arm_cortexa8 spearR1801e spear spear13xx
 
 suen3_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs km_arm keymile kirkwood
