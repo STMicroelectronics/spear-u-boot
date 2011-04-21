@@ -2863,7 +2863,6 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_TINY_GURNARD         2880
 #define MACH_TYPE_SPEAR1310            2881
 #define MACH_TYPE_SPEAR900             3061
-#define MACH_TYPE_SPEARR1801E             3464
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
@@ -37075,18 +37074,6 @@ extern unsigned int __machine_arch_type;
 # define machine_is_spear900()	(machine_arch_type == MACH_TYPE_SPEAR900)
 #else
 # define machine_is_spear900()	(0)
-#endif
-
-#ifdef CONFIG_MACH_SPEARR1801E
-# ifdef machine_arch_type
-#  undef machine_arch_type
-#  define machine_arch_type	__machine_arch_type
-# else
-#  define machine_arch_type	MACH_TYPE_SPEARR1801E
-# endif
-# define machine_is_spearR1801E()	(machine_arch_type == MACH_TYPE_SPEARR1801E)
-#else
-# define machine_is_spearR1801E()	(0)
 #endif
 
 
