@@ -59,7 +59,7 @@
 #define CONFIG_NET_MULTI
 #define CONFIG_DW_ALTDESCRIPTOR			1
 #define CONFIG_DW_SEARCH_PHY			1			/* SOM has only one phy */
-#define CONFIG_DW0_PHY				0x0
+#define CONFIG_DW0_PHY				0
 #define CONFIG_PHY_RESET_DELAY			(10000)		/* in usec */
 #define CONFIG_DW_AUTONEG			1
 #endif
@@ -81,8 +81,8 @@
 /* Timer, HZ specific defines */
 #define CONFIG_SYS_HZ				(1000)
 
-#define CONFIG_SYS_NO_FLASH		1
 /* NOT NEEDED??? */
+#define CONFIG_SYS_NO_FLASH		1
 #if 0
 /* Flash configuration */
 #define CONFIG_ST_SMI				1
@@ -190,15 +190,16 @@
 #define CONFIG_FSMTDBLK				"/dev/mtdblock7 "
 
 #define CONFIG_BOOTCOMMAND			"nand read.jffs2 0x1600000 " \
-						"0x80000 0x4C0000; " \
+						"0xe0000 0x208000; " \
 						"bootm 0x1600000"
 
 #define CONFIG_BOOTARGS_NFS			"root=/dev/nfs ip=dhcp " \
 						"console=ttyAMA0,115200 " \
 						"init=/bin/sh"
 #define CONFIG_BOOTARGS				"console=ttyAMA0,115200 " \
-						"root="CONFIG_FSMTDBLK \
-						"rootfstype=jffs2"
+						"mem=1G "  \
+						"root=/dev/sda1 " \
+						"ip=dhcp"
 
 #define CONFIG_ENV_SIZE				0x02000
 
@@ -240,5 +241,15 @@
 #define CONFIG_NR_DRAM_BANKS			1
 #define PHYS_SDRAM_1				0x00000000
 #define PHYS_SDRAM_1_MAXSIZE			0x40000000
+
+/* usb configuration */
+#define CONFIG_USB_DEVICE
+#define CONFIG_USB_TTY
+#define CONFIG_USBD_PRODUCT_NAME		"SPEAr SoC"
+#define CONFIG_USBD_MANUFACTURER		"ST Microelectronics"
+#define CONFIG_USBD_HS
+
+/* misc */
+#define CONFIG_DW_UDC
 
 #endif
