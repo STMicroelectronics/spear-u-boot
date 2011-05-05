@@ -109,7 +109,9 @@ static int mac_reset(struct eth_device *dev)
 	int timeout = CONFIG_MACRESET_TIMEOUT;
 
 	writel(DMAMAC_SRST, &dma_p->busmode);
+#if  !defined(CONFIG_SPEAR13XX)
 	writel(MII_PORTSELECT, &mac_p->conf);
+#endif
 
 	do {
 		if (!(readl(&dma_p->busmode) & DMAMAC_SRST))
@@ -376,6 +378,7 @@ static int configure_phy(struct eth_device *dev)
 	u16 bmsr;
 	u32 timeout;
 	u16 anlpar, btsr;
+	u16 phyid1, phyid2, linkreg;
 #else
 	u16 ctrl;
 #endif
@@ -389,6 +392,20 @@ static int configure_phy(struct eth_device *dev)
 #endif
 	if (dw_reset_phy(dev) < 0)
 		return -1;
+
+#if defined(CONFIG_MACH_SPEARR1801E)
+	eth_mdio_read(dev, phy_addr, PHY_PHYIDR1, &phyid1);
+	eth_mdio_read(dev, phy_addr, PHY_PHYIDR2, &phyid2);
+
+	if (phyid1 == 0x0022 && (phyid2 & 0xfff0) == 0x1610) {
+		/*
+		 * Note: Adjust timing within Micrel PHY, otherwise link
+		 * doesn't work
+		 */
+		eth_mdio_write(dev, phy_addr, 0x0b, 0x8104);
+		eth_mdio_write(dev, phy_addr, 0x0c, 0x7700);
+	}
+#endif
 
 #if defined(CONFIG_DW_AUTONEG)
 	bmcr = PHY_BMCR_AUTON | PHY_BMCR_RST_NEG | PHY_BMCR_100MB | \
