@@ -40,6 +40,7 @@ ifdef CONFIG_USB_DEVICE
 COBJS-y += core.o
 COBJS-y += ep0.o
 COBJS-$(CONFIG_DW_UDC) += designware_udc.o
+COBJS-$(CONFIG_DW_OTG) += designware_otg.o
 COBJS-$(CONFIG_OMAP1510) += omap1510_udc.o
 COBJS-$(CONFIG_OMAP1610) += omap1510_udc.o
 COBJS-$(CONFIG_MPC885_FAMILY) += mpc8xx_udc.o

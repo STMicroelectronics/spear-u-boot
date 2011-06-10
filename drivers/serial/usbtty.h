@@ -35,6 +35,8 @@
 #include <usb/pxa27x_udc.h>
 #elif defined(CONFIG_DW_UDC)
 #include <usb/designware_udc.h>
+#elif defined(CONFIG_DW_OTG)
+#include <usb/designware_otg.h>
 #endif
 
 #include <version.h>
