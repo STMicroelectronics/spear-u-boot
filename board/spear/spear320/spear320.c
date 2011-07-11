@@ -23,6 +23,7 @@
  */
 
 #include <common.h>
+#include <miiphy.h>
 #include <netdev.h>
 #include <nand.h>
 #include <asm/io.h>
@@ -31,8 +32,18 @@
 #include <asm/arch/spr_defs.h>
 #include <asm/arch/spr_misc.h>
 
+#define PLGPIO_SEL_36	0xb3000028
+#define PLGPIO_IO_36	0xb3000038
+
+static void spear_phy_reset(void)
+{
+	writel(0x10, PLGPIO_IO_36);
+	writel(0x10, PLGPIO_SEL_36);
+}
+
 int board_init(void)
 {
+	spear_phy_reset();
 	return spear_board_init(MACH_TYPE_SPEAR320);
 }
 
@@ -63,14 +74,17 @@ int board_nand_init(struct nand_chip *nand)
 int board_eth_init(bd_t *bis)
 {
 	int ret = 0;
+
 #if defined(CONFIG_DESIGNWARE_ETH)
-	if (designware_initialize(0, CONFIG_SPEAR_ETHBASE, CONFIG_DW0_PHY) < 0)
-		ret += -1;
+	u32 interface = PHY_INTERFACE_MODE_MII;
+	if (designware_initialize(0, CONFIG_SPEAR_ETHBASE, CONFIG_DW0_PHY,
+				interface) >= 0)
+		ret++;
 #endif
 #if defined(CONFIG_MACB)
 	if (macb_eth_initialize(0, (void *)CONFIG_SYS_MACB0_BASE,
-				CONFIG_MACB0_PHY) < 0)
-		ret += -1;
+				CONFIG_MACB0_PHY) >= 0)
+		ret++;
 #endif
 	return ret;
 }
