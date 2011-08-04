@@ -139,6 +139,10 @@ int arch_cpu_init(void)
 		} else {
 			/* Clear the RESET condition. */
 			writel(0x2, &misc_p->sys_sw_res);
+			
+			/* Wait few cycles */
+			for (tmp_var = 0; tmp_var < 0x10000; tmp_var++)
+				;
 		}
 
 	}
