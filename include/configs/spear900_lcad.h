@@ -24,15 +24,17 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#if defined(CONFIG_MK_spear900_lcad)
 #define CONFIG_SPEAR13XX			1
 #define CONFIG_SPEAR900_LCAD			1
 #define CONFIG_MACH_SPEAR900_LCAD	1
-#endif
 
 #if defined(CONFIG_MK_usbtty)
 #define CONFIG_SPEAR_USBTTY			1
 #endif
+
+#define CONFIG_ENV_IS_IN_NAND			1
+
+#define CONFIG_YAFFS2			1
 
 #if !defined(CONFIG_SPEAR_USBTTY)
 /* Solve issue #101435 - UHC blocks the BUSMATRIX */
@@ -119,10 +121,6 @@
 #define CONFIG_CMD_RUN
 
 #if !defined(CONFIG_SPEAR_USBTTY)
-#define CONFIG_CMD_NET
-#define CONFIG_CMD_MII
-#define CONFIG_CMD_PING
-#define CONFIG_CMD_DHCP
 
 #if defined(CONFIG_USB_STORAGE) || defined(CONFIG_MMC)
 #define CONFIG_CMD_FAT
@@ -135,10 +133,8 @@
 /* This must be included AFTER the definition of CONFIG_COMMANDS (if any) */
 #include <config_cmd_default.h>
 
-#if defined(CONFIG_SPEAR_USBTTY)
 #undef CONFIG_CMD_NET
 #undef CONFIG_CMD_NFS
-#endif
 
 /*
  * Default Environment Varible definitions
@@ -172,8 +168,8 @@
  * Environment is in NAND
  */
 
-#define CONFIG_ENV_OFFSET			0x60000
-#define CONFIG_ENV_RANGE			0x10000
+#define CONFIG_ENV_OFFSET			0x120000
+#define CONFIG_ENV_RANGE			0x20000
 #define CONFIG_FSMTDBLK				"/dev/mtdblock7 "
 
 #define CONFIG_BOOTCOMMAND			"nand read.jffs2 0x1600000 " \

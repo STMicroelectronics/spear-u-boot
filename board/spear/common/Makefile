@@ -32,10 +32,12 @@ LIB	= $(obj)lib$(VENDOR).a
 COBJS-$(CONFIG_SPEAR3XX) += spr_misc.o
 COBJS-$(CONFIG_SPEAR600) += spr_misc.o
 COBJS-$(CONFIG_SPEAR13XX) += spr13xx_misc.o
+COBJS-$(CONFIG_SPEAR900_LCAD) += spr13xx_misc.o
 
 SOBJS-$(CONFIG_SPEAR3XX) += spr_lowlevel_init.o
 SOBJS-$(CONFIG_SPEAR600) += spr_lowlevel_init.o
 SOBJS-$(CONFIG_SPEAR13XX) += spr13xx_lowlevel_init.o
+SOBJS-$(CONFIG_SPEAR900_LCAD) += spr13xx_lowlevel_init.o
 
 COBJS	:= $(COBJS-y)
 SOBJS	:= $(SOBJS-y)

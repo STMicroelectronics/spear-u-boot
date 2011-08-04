@@ -3095,7 +3095,7 @@ spear900_lcad_config \
 spear900_lcad_nand_config \
 spear900_lcad_usbtty_config \
 spear900_lcad_usbtty_nand_config :	unconfig
-	@$(MKCONFIG) -n $@ -t $(@:_config=) spear13xx_evb arm arm_cortexa8 spear900_lcad spear spear13xx
+	@$(MKCONFIG) -n $@ -t $(@:_config=) spear900_lcad arm arm_cortexa8 spear900_lcad spear spear13xx
 
 spearR1801e_config \
 spearR1801e_nand_config \
