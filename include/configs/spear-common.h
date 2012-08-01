@@ -192,8 +192,16 @@
  * Environment is in NAND
  */
 
+#if defined(CONFIG_SPEAR310) || defined(CONFIG_SPEAR320_HMI)
+
+#define CONFIG_ENV_OFFSET			0x1E0000
+#define CONFIG_ENV_RANGE			0x20000
+
+#else
 #define CONFIG_ENV_OFFSET			0x60000
 #define CONFIG_ENV_RANGE			0x10000
+#endif
+
 #define CONFIG_FSMTDBLK				"/dev/mtdblock7 "
 
 #if defined(CONFIG_SPEAR310) || defined(CONFIG_SPEAR320_HMI)
