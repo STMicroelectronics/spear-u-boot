@@ -56,5 +56,12 @@ int ehci_hcd_init(void)
  */
 int ehci_hcd_stop(void)
 {
+#ifdef CONFIG_SPEAR13XX
+	spear13xx_usbh_stop();
+#endif
+
+#if defined(CONFIG_SPEAR3XX) || defined(CONFIG_SPEAR600)
+	spear_usbh_stop();
+#endif
 	return 0;
 }

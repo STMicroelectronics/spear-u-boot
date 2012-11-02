@@ -65,11 +65,27 @@ int arch_cpu_init(void)
 	periph1_clken |= MISC_FSMCENB;
 #endif
 #if defined(CONFIG_USB_EHCI_SPEAR)
-	periph1_clken |= MISC_USBHENB;
+	periph1_clken |= MISC_USBH0_ENB;
 #endif
 
 	writel(periph1_clken, &misc_p->periph1_clken);
 	return 0;
+}
+#endif
+
+#if defined(CONFIG_USB_EHCI_SPEAR)
+void spear_usbh_stop(void)
+{
+	struct misc_regs *const misc_p =
+		(struct misc_regs *)CONFIG_SPEAR_MISCBASE;
+	u32 perip1_sw_rst = readl(&misc_p->periph1_rst);
+
+	perip1_sw_rst |= MISC_USBH0_ENB;
+	writel(perip1_sw_rst, &misc_p->periph1_rst);
+
+	udelay(1000);
+	perip1_sw_rst &= ~MISC_USBH0_ENB;
+	writel(perip1_sw_rst, &misc_p->periph1_rst);
 }
 #endif
 

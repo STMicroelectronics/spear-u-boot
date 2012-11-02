@@ -30,5 +30,8 @@ extern struct pmx_mode spear320s_extended_mode;
 void spear320_common_init(struct pmx_mode *pmx_mode, struct pmx_dev
 		**pmx_devs, u8 pmx_dev_count);
 void spear3xx_pmx_init_addr(struct pmx_driver *driver, unsigned int addr);
+#if defined(CONFIG_USB_EHCI_SPEAR)
+void spear_usbh_stop(void);
+#endif
 
 #endif /* _SPR_GENERIC_ */

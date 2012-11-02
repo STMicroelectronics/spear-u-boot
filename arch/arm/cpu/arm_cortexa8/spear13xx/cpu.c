@@ -169,6 +169,22 @@ int arch_cpu_init(void)
 }
 #endif
 
+#if defined(CONFIG_USB_EHCI_SPEAR)
+void spear13xx_usbh_stop(void)
+{
+	struct misc_regs *const misc_p =
+		(struct misc_regs *)CONFIG_SPEAR_MISCBASE;
+	u32 perip1_sw_rst = readl(&misc_p->perip1_sw_rst);
+
+	perip1_sw_rst |= UHC0_SWRST;
+	writel(perip1_sw_rst, &misc_p->perip1_sw_rst);
+
+	udelay(1000);
+	perip1_sw_rst &= ~UHC0_SWRST;
+	writel(perip1_sw_rst, &misc_p->perip1_sw_rst);
+}
+#endif
+
 #ifdef CONFIG_DISPLAY_CPUINFO
 int print_cpuinfo(void)
 {

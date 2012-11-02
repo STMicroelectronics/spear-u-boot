@@ -250,6 +250,8 @@ struct misc_regs {
 
 /* perip1_sw_rst */
 #define UDC_UPD_SWRST                  0x00000800
+#define UHC0_SWRST			0x00000200
+#define UHC1_SWRST			0x00000400
 
 /*
  * Platform specific defines (SPEAr)

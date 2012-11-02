@@ -276,6 +276,10 @@ struct misc_regs {
 #define ADC_CLKEN				(1 << 30)
 #define RTC_CLKEN				(1 << 31)
 
+/* perip1_reset defintions */
+#define UHC0_SWRST				(1 << 9)
+#define UHC1_SWRST				(1 << 10)
+
 #define DDR_CTRL_CLKEN				(1 << 0)	/* perip2 */
 #define DDR_CORE_CLKEN				(1 << 1)
 #define CPU_DBG_CLKEN				(1 << 2)

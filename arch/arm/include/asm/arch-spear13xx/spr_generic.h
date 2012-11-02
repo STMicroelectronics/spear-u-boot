@@ -27,5 +27,8 @@
 #if defined(CONFIG_SPEAR_MMC)
 int sdhci_initialize(u32, ulong);
 #endif
+#if defined(CONFIG_USB_EHCI_SPEAR)
+void spear13xx_usbh_stop(void);
+#endif
 
 #endif
