@@ -89,84 +89,6 @@ static u32 get_wrlvl_start(u32 wrlvl_base_off)
 	return wrlvl_start;
 }
 
-static void set_wrlvldelay(u32 wrlvl_start, u32 *final_wrlvl_delay)
-{
-	u32 *phy_ctrl_reg1 = &mpmc_p->reg130;
-	u32 *phy_ctrl_reg0 = &mpmc_p->reg124;
-	u32 wrlvl_delay, slice, start_search;
-	u32 start_wrlvl_delay_mod, i;
-	u32 phy_ctrl_reg1_dqsgate_assertval[] = {
-		(0 << 0) | (1 << 3),
-		(0 << 0) | (2 << 3),
-		(0 << 0) | (1 << 3),
-		(0 << 0) | (2 << 3)
-	};
-	u32 phy_ctrl_reg1_dqsgate_deassertval[] = {
-		(0 << 5) | (2 << 8),
-		(0 << 5) | (1 << 8),
-		(0 << 5) | (2 << 8),
-		(0 << 5) | (1 << 8)
-	};
-	u8 resp_total[DATA_SLICE_MAX][WRLVL_DELAY_MAX];
-
-	/*
-	 * Start write leveling operation to find the wrlvldelay parameters for
-	 * each data slice
-	 */
-	for (slice = 0; slice < DATA_SLICE_MAX; slice++) {
-		swlvl_start();
-		wait_op_done();
-
-		for (wrlvl_delay = 0; wrlvl_delay < WRLVL_DELAY_MAX; wrlvl_delay++) {
-			start_wrlvl_delay_mod = wrlvl_start + wrlvl_delay;
-			reset_phy_ctrl_reg(phy_ctrl_reg0 + slice);
-			prog_wrlvl_delay(slice, wrlvl_delay);
-
-			writel_field(phy_ctrl_reg1_dqsgate_assertval[start_wrlvl_delay_mod/4],
-					DQSGATE_ASSERT_MSK, phy_ctrl_reg1 + slice);
-			writel_field(phy_ctrl_reg1_dqsgate_deassertval[start_wrlvl_delay_mod/4],
-					DQSGATE_DEASSERT_MSK, phy_ctrl_reg1 + slice);
-
-			resp_total[slice][wrlvl_delay] = 0;
-
-			for (i = 0; i < 4; i++) {
-				swlvl_load();
-				wait_op_done();
-
-				resp_total[slice][wrlvl_delay] += read_resp(slice);
-			}
-		}
-
-		start_search = 0;
-		for (wrlvl_delay = 0; wrlvl_delay < WRLVL_DELAY_MAX; wrlvl_delay++) {
-			if ((resp_total[slice][wrlvl_delay] < 4) && !start_search)
-				start_search = 1;
-			if ((resp_total[slice][wrlvl_delay] == 4) && start_search)
-				break;
-		}
-
-		/*
-		 * added 1 phase to DQS position
-		 * original was final_wrlvl_delay[slice] = wrlvl_delay - 1
-		 */
-		final_wrlvl_delay[slice] = wrlvl_delay;
-
-		prog_wrlvl_delay(slice, final_wrlvl_delay[slice]);
-		start_wrlvl_delay_mod = wrlvl_start + final_wrlvl_delay[slice];
-
-		writel_field(phy_ctrl_reg1_dqsgate_assertval[start_wrlvl_delay_mod/4],
-				DQSGATE_ASSERT_MSK, phy_ctrl_reg1 + slice);
-		writel_field(phy_ctrl_reg1_dqsgate_deassertval[start_wrlvl_delay_mod/4],
-				DQSGATE_DEASSERT_MSK, phy_ctrl_reg1 + slice);
-
-		swlvl_load();
-		wait_op_done();
-
-		swlvl_exit();
-		wait_op_done();
-	}
-}
-
 static u32 get_match_pre(u32 slice)
 {
 	u32 *obs_reg = &mpmc_p->reg175;
@@ -567,6 +489,84 @@ void ddr2_lvl_write(void)
 }
 #elif defined(CONFIG_DDR3)
 
+static void set_wrlvldelay_ddr3(u32 wrlvl_start, u32 *final_wrlvl_delay)
+{
+	u32 *phy_ctrl_reg1 = &mpmc_p->reg130;
+	u32 *phy_ctrl_reg0 = &mpmc_p->reg124;
+	u32 wrlvl_delay, slice, start_search;
+	u32 start_wrlvl_delay_mod, i;
+	u32 phy_ctrl_reg1_dqsgate_assertval[] = {
+		(0 << 0) | (1 << 3),
+		(0 << 0) | (2 << 3),
+		(0 << 0) | (1 << 3),
+		(0 << 0) | (2 << 3)
+	};
+	u32 phy_ctrl_reg1_dqsgate_deassertval[] = {
+		(0 << 5) | (2 << 8),
+		(0 << 5) | (1 << 8),
+		(0 << 5) | (2 << 8),
+		(0 << 5) | (1 << 8)
+	};
+	u8 resp_total[DATA_SLICE_MAX][WRLVL_DELAY_MAX];
+
+	/*
+	 * Start write leveling operation to find the wrlvldelay parameters for
+	 * each data slice
+	 */
+	for (slice = 0; slice < DATA_SLICE_MAX; slice++) {
+		swlvl_start();
+		wait_op_done();
+
+		for (wrlvl_delay = 0; wrlvl_delay < WRLVL_DELAY_MAX; wrlvl_delay++) {
+			start_wrlvl_delay_mod = wrlvl_start + wrlvl_delay;
+			reset_phy_ctrl_reg(phy_ctrl_reg0 + slice);
+			prog_wrlvl_delay(slice, wrlvl_delay);
+
+			writel_field(phy_ctrl_reg1_dqsgate_assertval[start_wrlvl_delay_mod/4],
+					DQSGATE_ASSERT_MSK, phy_ctrl_reg1 + slice);
+			writel_field(phy_ctrl_reg1_dqsgate_deassertval[start_wrlvl_delay_mod/4],
+					DQSGATE_DEASSERT_MSK, phy_ctrl_reg1 + slice);
+
+			resp_total[slice][wrlvl_delay] = 0;
+
+			for (i = 0; i < 4; i++) {
+				swlvl_load();
+				wait_op_done();
+
+				resp_total[slice][wrlvl_delay] += read_resp(slice);
+			}
+		}
+
+		start_search = 0;
+		for (wrlvl_delay = 0; wrlvl_delay < WRLVL_DELAY_MAX; wrlvl_delay++) {
+			if ((resp_total[slice][wrlvl_delay] < 4) && !start_search)
+				start_search = 1;
+			if ((resp_total[slice][wrlvl_delay] == 4) && start_search)
+				break;
+		}
+
+		/*
+		 * added 1 phase to DQS position
+		 * original was final_wrlvl_delay[slice] = wrlvl_delay - 1
+		 */
+		final_wrlvl_delay[slice] = wrlvl_delay;
+
+		prog_wrlvl_delay(slice, final_wrlvl_delay[slice]);
+		start_wrlvl_delay_mod = wrlvl_start + final_wrlvl_delay[slice];
+
+		writel_field(phy_ctrl_reg1_dqsgate_assertval[start_wrlvl_delay_mod/4],
+				DQSGATE_ASSERT_MSK, phy_ctrl_reg1 + slice);
+		writel_field(phy_ctrl_reg1_dqsgate_deassertval[start_wrlvl_delay_mod/4],
+				DQSGATE_DEASSERT_MSK, phy_ctrl_reg1 + slice);
+
+		swlvl_load();
+		wait_op_done();
+
+		swlvl_exit();
+		wait_op_done();
+	}
+}
+
 void ddr3_lvl_write(void)
 {
 	int wrlvl_start;
@@ -587,7 +587,7 @@ void ddr3_lvl_write(void)
 		wait_op_done();
 
 		/* Set wrlvl_delay parameters through write leveling */
-		set_wrlvldelay(wrlvl_start, final_wrlvl_delay);
+		set_wrlvldelay_ddr3(wrlvl_start, final_wrlvl_delay);
 
 		wrlvl_base_offset_check = 0;
 
