@@ -433,7 +433,7 @@ int fsmc_nand_init(struct nand_chip *nand)
 	writel(FSMC_THIZ_1 | FSMC_THOLD_4 | FSMC_TWAIT_6 | FSMC_TSET_0,
 			&fsmc_regs_p->attrib);
 
-	nand->options = 0;
+	nand->options = NAND_SKIP_BBTSCAN;
 #if defined(CONFIG_SYS_FSMC_NAND_16BIT)
 	nand->options |= NAND_BUSWIDTH_16;
 #endif
