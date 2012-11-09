@@ -162,7 +162,7 @@ void udc_phy_init(void)
 	writel(temp, &misc_regs_p->usbphy_gen_cfg);
 
 	/* wait for pll lock */
-	while (!(readl(&misc_regs_p->usbphy_gen_cfg) & USB_PLL_LOCK))
+	while (!(readl(&misc_regs_p->usbphy_gen_cfg) & SPEAR1310_USB_PLL_LOCK))
 		;
 
 	udelay(1);
