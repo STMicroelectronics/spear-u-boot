@@ -34,6 +34,21 @@
 /* Timer, HZ specific defines */
 #define CONFIG_SYS_HZ				1000
 
+
+#if defined(CONFIG_NAND_FSMC) || \
+	defined(CONFIG_ST_SMI) || \
+	defined(CONFIG_FLASH_CFI_DRIVER)
+
+	#define CONFIG_MTD_DEVICE
+	#define CONFIG_MTD_PARTITIONS
+
+	#define CONFIG_CMD_JFFS2
+	#define CONFIG_CMD_MTDPARTS
+	#ifdef CONFIG_NAND_FSMC
+		#define CONFIG_JFFS2_NAND
+	#endif
+#endif
+
 /* Generic configuration for Designware Ethernet */
 #if defined(CONFIG_DESIGNWARE_ETH) || defined(CONFIG_MACB)
 	#define CONFIG_MII
@@ -145,8 +160,6 @@
 /* Generic configuration for FSMC NAND driver */
 #if defined(CONFIG_NAND_FSMC)
 	#define CONFIG_SYS_NAND_SELF_INIT
-	#define CONFIG_MTD_DEVICE
-	#define CONFIG_MTD_PARTITIONS
 	#define CONFIG_SYS_MAX_NAND_DEVICE	1
 	#define CONFIG_SYS_NAND_ONFI_DETECTION
 	#define CONFIG_SYS_NAND_QUIET_TEST
