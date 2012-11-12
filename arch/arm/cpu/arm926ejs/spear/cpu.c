@@ -24,6 +24,7 @@
 #include <common.h>
 #include <linux/mtd/st_smi.h>
 #include <asm/io.h>
+#include <asm/arch/generic.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/misc.h>
 
