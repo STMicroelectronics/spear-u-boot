@@ -24,6 +24,7 @@
 #include <common.h>
 #include <flash.h>
 #include <linux/err.h>
+#include <linux/mtd/mtd.h>
 #include <linux/mtd/st_smi.h>
 
 #include <asm/io.h>
@@ -36,6 +37,14 @@ static struct smi_regs *const smicntl =
 static ulong bank_base[CONFIG_SYS_MAX_FLASH_BANKS] =
     CONFIG_SYS_FLASH_ADDR_BASE;
 flash_info_t flash_info[CONFIG_SYS_MAX_FLASH_BANKS];
+
+#if defined(CONFIG_MTD_DEVICE)
+/* MTD interface for SMI devices */
+static struct mtd_info smi_mtd_info[CONFIG_SYS_MAX_FLASH_BANKS];
+static char smi_mtd_names[CONFIG_SYS_MAX_FLASH_BANKS][16];
+
+static int smi_mtd_init(void);
+#endif
 
 /* data structure to maintain flash ids from different vendors */
 struct flash_device {
@@ -482,7 +491,9 @@ unsigned long flash_init(void)
 {
 	unsigned long size = 0;
 	int i, j;
-
+#if defined(CONFIG_MTD_DEVICE)
+	int error;
+#endif
 	smi_init();
 
 	for (i = 0; i < CONFIG_SYS_MAX_FLASH_BANKS; i++) {
@@ -497,6 +508,12 @@ unsigned long flash_init(void)
 			    flash_info->size / flash_info->sector_count;
 
 	}
+
+#if defined(CONFIG_MTD_DEVICE)
+	error = smi_mtd_init();
+	if (error < 0)
+		return 0;
+#endif
 
 	return size;
 }
@@ -599,4 +616,150 @@ int flash_erase(flash_info_t *info, int s_first, int s_last)
 	puts(" done\n");
 	return rcode;
 }
-#endif
+
+#if defined(CONFIG_MTD_DEVICE)
+static int smi_mtd_erase(struct mtd_info *mtd, struct erase_info *instr)
+{
+	flash_info_t *fi = mtd->priv;
+	size_t a_start = fi->start[0] + instr->addr;
+	size_t a_end = a_start + instr->len;
+	int s_first = -1;
+	int s_last = -1;
+	int error, sect;
+
+	for (sect = 0; sect < fi->sector_count; sect++) {
+		if (a_start == fi->start[sect])
+			s_first = sect;
+
+		if (sect < fi->sector_count - 1) {
+			if (a_end == fi->start[sect + 1]) {
+				s_last = sect;
+				break;
+			}
+		} else {
+			s_last = sect;
+			break;
+		}
+	}
+
+	if (s_first >= 0 && s_first <= s_last) {
+		instr->state = MTD_ERASING;
+
+		error = flash_erase(fi, s_first, s_last);
+		if (error) {
+			instr->state = MTD_ERASE_FAILED;
+			return -EIO;
+		}
+
+		instr->state = MTD_ERASE_DONE;
+		mtd_erase_callback(instr);
+		return 0;
+	}
+
+	return -EINVAL;
+}
+
+static int smi_mtd_read(struct mtd_info *mtd, loff_t from, size_t len,
+	size_t *retlen, u_char *buf)
+{
+	flash_info_t *fi = mtd->priv;
+	u_char *f = (u_char*)(fi->start[0]) + from;
+
+	memcpy(buf, f, len);
+	*retlen = len;
+
+	return 0;
+}
+
+static int smi_mtd_write(struct mtd_info *mtd, loff_t to, size_t len,
+	size_t *retlen, const u_char *buf)
+{
+	flash_info_t *fi = mtd->priv;
+	u_long t = fi->start[0] + to;
+	int error;
+
+	error = write_buff(fi, (u_char*)buf, t, len);
+	if (!error) {
+		*retlen = len;
+		return 0;
+	}
+
+	return -EIO;
+}
+
+static void smi_mtd_sync(struct mtd_info *mtd)
+{
+	/*
+	 * This function should wait until all pending operations
+	 * finish. However this driver is fully synchronous, so
+	 * this function returns immediately
+	 */
+}
+
+static int smi_mtd_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
+{
+	flash_info_t *fi = mtd->priv;
+
+	flash_protect(FLAG_PROTECT_SET, fi->start[0] + ofs,
+					fi->start[0] + ofs + len - 1, fi);
+	return 0;
+}
+
+static int smi_mtd_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
+{
+	flash_info_t *fi = mtd->priv;
+
+	flash_protect(FLAG_PROTECT_CLEAR, fi->start[0] + ofs,
+					fi->start[0] + ofs + len - 1, fi);
+	return 0;
+}
+
+static int smi_mtd_init(void)
+{
+	struct flash_device *flash_device_p;
+	struct mtd_info *mtd;
+	flash_info_t *fi;
+	int i;
+
+	for (i = 0; i < CONFIG_SYS_MAX_FLASH_BANKS; i++) {
+		fi = &flash_info[i];
+
+		if (!fi->size)
+			continue;
+
+		flash_device_p = get_flash_device(fi->flash_id);
+		if (!flash_device_p)
+			return -EIO;
+
+		mtd = &smi_mtd_info[i];
+
+		memset(mtd, 0, sizeof(struct mtd_info));
+
+		/* Uniform erase sizes for all sectors */
+		mtd->numeraseregions = 0;
+		mtd->erasesize = flash_device_p->sectorsize;
+
+		sprintf(smi_mtd_names[i], "nor%d", i);
+		mtd->name		= smi_mtd_names[i];
+		mtd->type		= MTD_NORFLASH;
+		mtd->flags		= MTD_CAP_NORFLASH;
+		mtd->size		= fi->size;
+		mtd->writesize		= 1;
+
+		mtd->erase		= smi_mtd_erase;
+		mtd->read		= smi_mtd_read;
+		mtd->write		= smi_mtd_write;
+		mtd->sync		= smi_mtd_sync;
+		mtd->lock		= smi_mtd_lock;
+		mtd->unlock		= smi_mtd_unlock;
+		mtd->priv		= fi;
+
+		if (add_mtd_device(mtd))
+			return -ENOMEM;
+	}
+
+	return 0;
+}
+#endif /* CONFIG_MTD_DEVICE */
+
+#endif /* CONFIG_SYS_NO_FLASH */
