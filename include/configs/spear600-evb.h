@@ -113,7 +113,11 @@
 
 #define CONFIG_BOARD_EXTRA_ENV			""			\
 	"loados=tftpboot 0x900000 $(rootpath)/spear600_uImage\0"	\
-	"loaddtb=tftpboot 0x800000 $(rootpath)/spear600-evb.dtb\0"
+	"loaddtb=tftpboot 0x800000 $(rootpath)/spear600-evb.dtb\0"	\
+	"mtdids=nor0=m25p64,nand0=nand512w3acza6\0"			\
+	"mtdparts=mtdparts=m25p64:64k(xloader)ro,320k(u-boot)ro,64k(environment)ro,64k(dtb)ro,3136k(kernel)ro,-(rootfs);"	\
+		"nand512w3acza6:64k(xloader)ro,384k(u-boot)ro,32k(environment)ro,32k(dtb)ro,4M(kernel)ro,-(rootfs)\0"		\
+	"partition=nor0,5\0"
 
 #include <configs/spear600.h>
 #endif
