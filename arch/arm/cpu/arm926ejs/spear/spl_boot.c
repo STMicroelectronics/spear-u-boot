@@ -52,6 +52,19 @@ int image_check_data(image_header_t *hdr)
 	return (dcrc == image_get_dcrc(hdr));
 }
 
+/*
+ * SNOR (Serial NOR flash) related functions
+ */
+void snor_init(void)
+{
+	struct smi_regs *const smicntl =
+		(struct smi_regs * const)CONFIG_SYS_SMI_BASE;
+
+	/* Setting the fast mode values. SMI working at 166/4 = 41.5 MHz */
+	writel(HOLD1 | FAST_MODE | BANK_EN | DSEL_TIME | PRESCAL4,
+	       &smicntl->smi_cr1);
+}
+
 static int snor_image_load(u8 *load_addr, void (**image_p)(void))
 {
 	image_header_t header;
@@ -200,7 +213,7 @@ u32 spl_boot(void)
 
 	if (SNOR_BOOT_SUPPORTED && snor_boot_selected()) {
 		/* SNOR-SMI initialization */
-		smi_init();
+		snor_init();
 
 		/* Serial NOR booting */
 		if (snor_image_load((u8 *)CONFIG_SYS_SNOR_BOOT_BASE, &image)) {
