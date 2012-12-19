@@ -79,6 +79,95 @@ static int nand_dump(nand_info_t *nand, ulong off, int only_oob)
 	return 0;
 }
 
+#define NAND_RW_RAW_READ 0
+#define NAND_RW_RAW_WRITE 1
+
+static int nand_rdwr_raw(int rdwr, nand_info_t *nand, ulong off, u_char *buf,
+				size_t size)
+{
+	struct mtd_oob_ops ops = {
+		.len = nand->writesize,
+		.ooblen = nand->oobsize,
+		.mode = MTD_OOB_RAW,
+	};
+	int i;
+	int nrblocks = size / nand->writesize;
+	loff_t addr = (loff_t)(off & ~(nand->writesize - 1));
+
+	while (nrblocks--) {
+		ops.datbuf = buf;
+		/*
+		 * for read oobbuf must be set, but oob data
+		 * will be appended to ops.datbuf
+		 * for write oobbuf is actually used
+		 */
+		ops.oobbuf = buf + nand->writesize;
+		if (rdwr == NAND_RW_RAW_READ)
+			i = nand->read_oob(nand, addr, &ops);
+		else
+			i = nand->write_oob(nand, addr, &ops);
+		if (i < 0) {
+			printf("Error (%d) %s page %08lx\n", i,
+					rdwr == NAND_RW_RAW_READ ?
+						"reading" : "writing",
+					(unsigned long)addr);
+			return 1;
+		}
+
+		addr += nand->writesize;
+		buf += (nand->writesize + nand->oobsize);
+	}
+	return 0;
+}
+
+static int nand_read_raw(nand_info_t *nand, ulong off, u_char *buf,
+			 size_t size)
+{
+	return nand_rdwr_raw(NAND_RW_RAW_READ, nand, off, buf, size);
+}
+
+static int nand_write_raw(nand_info_t *nand, ulong off, u_char *buf,
+			  size_t size)
+{
+	return nand_rdwr_raw(NAND_RW_RAW_WRITE, nand, off, buf, size);
+}
+
+static int nand_biterr(nand_info_t *nand, ulong off, int bit)
+{
+	int ret = 0;
+	u_char *buf;
+	ulong blockoff = off & ~(nand->erasesize - 1);
+	int byteoff = off & (nand->erasesize - 1);
+	nand_erase_options_t opts = {
+		.offset = blockoff,
+		.length = nand->erasesize,
+	};
+
+	buf = malloc(nand->erasesize +
+			nand->oobsize * (nand->erasesize / nand->writesize));
+	if (!buf) {
+		puts("No memory for page buffer\n");
+		return 1;
+	}
+	nand_read_raw(nand, blockoff, buf, nand->erasesize);
+
+	ret = nand_erase_opts(nand, &opts);
+	if (ret) {
+		puts("Failed to erase block at %x\n");
+		return ret;
+	}
+
+	printf("toggling bit %x in byte %x in block %x %02x ->",
+		bit, byteoff, blockoff, buf[byteoff]);
+
+	buf[byteoff] ^= (1 << bit);
+
+	printf("%02x\n", buf[byteoff]);
+
+	nand_write_raw(nand, blockoff, buf, nand->erasesize);
+	free(buf);
+	return 0;
+}
 /* ------------------------------------------------------------------------- */
 
 static inline int str2long(char *p, ulong *num)
@@ -396,6 +485,13 @@ int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 				ret = nand->read_oob(nand, off, &ops);
 			else
 				ret = nand->write_oob(nand, off, &ops);
+		} else if (!strcmp(s, ".raw")) {
+			if (read)
+				ret = nand_read_raw(nand, off,
+						    (u_char *)addr, size);
+			else
+				ret = nand_write_raw(nand, off,
+						     (u_char *)addr, size);
 		} else {
 			printf("Unknown nand command suffix '%s'.\n", s);
 			return 1;
@@ -432,9 +528,19 @@ int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		}
 		return ret;
 	}
-
 	if (strcmp(cmd, "biterr") == 0) {
-		/* todo */
+		off = (ulong)simple_strtoul(argv[2], NULL, 16);
+		i = (int)simple_strtoul(argv[3], NULL, 16);
+
+		int ret = nand_biterr(nand, off, i);
+		if (ret == 0) {
+			printf("byte offset 0x%08lx toggled bit %d\n",
+			       (ulong) off, i);
+			return 0;
+		} else {
+			printf("byte offset 0x%08lx could not toggle bit %d\n",
+			       (ulong) addr, i);
+		}
 		return 1;
 	}
 
@@ -489,13 +595,16 @@ U_BOOT_CMD(nand, CONFIG_SYS_MAXARGS, 1, do_nand,
 	"nand write - addr off|partition size\n"
 	"    read/write 'size' bytes starting at offset 'off'\n"
 	"    to/from memory address 'addr', skipping bad blocks.\n"
+	"     .oob - reads/writes oob only.\n"
+	"     .raw - reads/writes both main and oob with no error\n"
+	"            detection or correction\n"
 	"nand erase [clean] [off size] - erase 'size' bytes from\n"
 	"    offset 'off' (entire device if not specified)\n"
 	"nand bad - show bad blocks\n"
 	"nand dump[.oob] off - dump page\n"
 	"nand scrub - really clean NAND erasing bad blocks (UNSAFE)\n"
 	"nand markbad off [...] - mark bad block(s) at offset (UNSAFE)\n"
-	"nand biterr off - make a bit error at offset (UNSAFE)"
+	"nand biterr off bitno - toggle bit bitno in byte off (UNSAFE)\n"
 #ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
 	"\n"
 	"nand lock [tight] [status]\n"
