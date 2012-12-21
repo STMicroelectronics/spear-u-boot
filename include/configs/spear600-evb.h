@@ -75,6 +75,7 @@
 /* FSMC NAND configurations */
 #define CONFIG_NAND_FSMC
 #define CONFIG_SYS_FSMC_NAND_8BIT
+#define CONFIG_MTD_NAND_ECC_SMC
 
 /* ST SMI (Serial flash) configurations */
 #define CONFIG_ST_SMI
