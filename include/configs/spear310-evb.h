@@ -87,6 +87,7 @@
 /* FSMC NAND configurations */
 #define CONFIG_NAND_FSMC
 #define CONFIG_SYS_FSMC_NAND_8BIT
+#define CONFIG_MTD_NAND_ECC_SMC
 
 /* Flash configurations */
 #if defined(CONFIG_FLASH_PNOR)
