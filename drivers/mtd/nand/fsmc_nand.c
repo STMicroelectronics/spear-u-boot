@@ -437,10 +437,15 @@ int fsmc_nand_init(struct nand_chip *nand)
 #if defined(CONFIG_SYS_FSMC_NAND_16BIT)
 	nand->options |= NAND_BUSWIDTH_16;
 #endif
+#ifdef CONFIG_NAND_ECC_BCH
+	nand->ecc.mode = NAND_ECC_SOFT_BCH;
+	nand->ecc.size = 1024;
+#else
 	nand->ecc.mode = NAND_ECC_HW;
 	nand->ecc.size = 512;
 	nand->ecc.calculate = fsmc_read_hwecc;
 	nand->ecc.hwctl = fsmc_enable_hwecc;
+#endif
 	nand->cmd_ctrl = fsmc_nand_hwcontrol;
 	nand->IO_ADDR_R = nand->IO_ADDR_W =
 		(void  __iomem *)CONFIG_SYS_NAND_BASE;
@@ -449,31 +454,59 @@ int fsmc_nand_init(struct nand_chip *nand)
 	mtd = &nand_info[chip_nr++];
 	mtd->priv = nand;
 
-	switch (fsmc_version) {
-	case FSMC_VER8:
-		nand->ecc.bytes = 13;
-		nand->ecc.correct = fsmc_bch8_correct_data;
-		nand->ecc.read_page = fsmc_read_page_hwecc;
-		if (mtd->writesize == 512)
-			nand->ecc.layout = &fsmc_ecc4_sp_layout;
-		else {
-			if (mtd->oobsize == 224)
-				nand->ecc.layout = &fsmc_ecc4_224_layout;
-			else
-				nand->ecc.layout = &fsmc_ecc4_lp_layout;
-		}
+	if (nand->ecc.mode != NAND_ECC_SOFT_BCH) {
+		switch (fsmc_version) {
+		case FSMC_VER8:
+			nand->ecc.bytes = 13;
+			nand->ecc.correct = fsmc_bch8_correct_data;
+			nand->ecc.read_page = fsmc_read_page_hwecc;
+			if (mtd->writesize == 512)
+				nand->ecc.layout = &fsmc_ecc4_sp_layout;
+			else {
+				if (mtd->oobsize == 224)
+					nand->ecc.layout = &fsmc_ecc4_224_layout;
+				else
+					nand->ecc.layout = &fsmc_ecc4_lp_layout;
+			}
 
-		break;
-	default:
-		nand->ecc.bytes = 3;
-		nand->ecc.layout = &fsmc_ecc1_layout;
-		nand->ecc.correct = nand_correct_data;
-		break;
+			break;
+		default:
+			nand->ecc.bytes = 3;
+			nand->ecc.layout = &fsmc_ecc1_layout;
+			nand->ecc.correct = nand_correct_data;
+			break;
+		}
 	}
 
 	/* Detect NAND chips */
 	if (nand_scan_ident(mtd, CONFIG_SYS_MAX_NAND_DEVICE, NULL))
 		return -ENXIO;
+
+	if (nand->ecc.mode == NAND_ECC_SOFT_BCH) {
+		uint oobeccsize, m;
+
+		/*
+		 * Initialize the ecc bytes and strength dynamically based on eccsize
+		 * and writesize.
+		 *
+		 * Parameters @eccsize and @eccbytes are used to compute BCH parameters
+		 * m (Galois field order) and t (error correction capability). @eccbytes
+		 * should be equal to the number of bytes required to store m*t bits,
+		 * where m is such that 2^m-1 > @eccsize*8.
+		 *
+		 * Example: to configure 4 bit correction per 512 bytes, you should pass
+		 * @eccsize = 512  (thus, m=13 is the smallest integer such that 2^m-1 >
+		 * 512*8) @eccbytes = 7 (7 bytes are required to store m*t = 13*4 = 52
+		 * bits)
+		 *
+		 * Note: 2 bytes of oob are considered reserved for bad block marking
+		 */
+		m = fls(1 + 8 * nand->ecc.size);
+		oobeccsize = ((mtd->oobsize - 2) * \
+				nand->ecc.size) / mtd->writesize;
+		nand->ecc.bytes = (oobeccsize / m) * m;
+		nand->ecc.layout = NULL;
+	}
 
 	if (nand_scan_tail(mtd))
 		return -ENXIO;
