@@ -289,7 +289,11 @@ static void set_dqs_parms(u32 wrlvl_start, u32 *final_wrlvl_delay)
 		dq_clk_phase_match0_pre = get_match0_pre(slice);
 		dq_clk_phase_match1_pre = get_match1_pre(slice);
 
-		if ((dq_clk_phase_match0_pre & 0x8) == 0)
+		if (((dq_clk_phase_match0_pre == 8) && (dq_clk_phase_match1_pre == 9))
+			|| ((dq_clk_phase_match0_pre == 9) && (dq_clk_phase_match1_pre == 8)))
+			dq_clk_phase_match_pre = 0x0;
+
+		else if ((dq_clk_phase_match0_pre & 0x8) == 0)
 			dq_clk_phase_match_pre = dq_clk_phase_match0_pre & 0xF;
 		else
 			dq_clk_phase_match_pre = dq_clk_phase_match1_pre & 0xF;
@@ -304,7 +308,11 @@ static void set_dqs_parms(u32 wrlvl_start, u32 *final_wrlvl_delay)
 
 		if (dqs_dq_clk_phase_match_delta > 3) {
 			/* if delta is too high recalculate */
-			if ((dq_clk_phase_match0_pre & 0x8) == 0)
+			if (((dq_clk_phase_match0_pre == 8) && (dq_clk_phase_match1_pre == 9))
+				|| ((dq_clk_phase_match0_pre == 9) && (dq_clk_phase_match1_pre == 8)))
+				dq_clk_phase_match_pre = 0x0;
+
+			else if ((dq_clk_phase_match0_pre & 0x8) == 0)
 				dq_clk_phase_match_pre = dq_clk_phase_match1_pre & 0xF;
 			else
 				dq_clk_phase_match_pre = dq_clk_phase_match0_pre & 0xF;
@@ -318,7 +326,7 @@ static void set_dqs_parms(u32 wrlvl_start, u32 *final_wrlvl_delay)
 			dqs_dq_clk_phase_match_delta &= 0xF;
 
 			if (dqs_dq_clk_phase_match_delta > 3)
-				hang();
+				dqs_dq_clk_phase_match_delta = 1;
 		}
 
 		dqs_dq_clk_phase_match_delta_value[slice] = dqs_dq_clk_phase_match_delta;
@@ -368,7 +376,11 @@ static void set_dqs_parms(u32 wrlvl_start, u32 *final_wrlvl_delay)
 		dq_clk_phase_match0_pre = get_match0_pre(slice);
 		dq_clk_phase_match1_pre = get_match1_pre(slice);
 
-		if ((dq_clk_phase_match0_pre & 0x8) == 0)
+		if (((dq_clk_phase_match0_pre == 8) && (dq_clk_phase_match1_pre == 9))
+			|| ((dq_clk_phase_match0_pre == 9) && (dq_clk_phase_match1_pre == 8)))
+			dq_clk_phase_match_pre = 0x0;
+
+		else if ((dq_clk_phase_match0_pre & 0x8) == 0)
 			dq_clk_phase_match_pre = dq_clk_phase_match0_pre & 0xF;
 		else
 			dq_clk_phase_match_pre = dq_clk_phase_match1_pre & 0xF;
@@ -383,7 +395,11 @@ static void set_dqs_parms(u32 wrlvl_start, u32 *final_wrlvl_delay)
 
 		if (dqs_dq_clk_phase_match_delta > 3) {
 			/* if delta is too high recalculate */
-			if ((dq_clk_phase_match0_pre & 0x8) == 0)
+			if (((dq_clk_phase_match0_pre == 8) && (dq_clk_phase_match1_pre == 9))
+				|| ((dq_clk_phase_match0_pre == 9) && (dq_clk_phase_match1_pre == 8)))
+				dq_clk_phase_match_pre = 0x0;
+
+			else if ((dq_clk_phase_match0_pre & 0x8) == 0)
 				dq_clk_phase_match_pre = dq_clk_phase_match1_pre & 0xF;
 			else
 				dq_clk_phase_match_pre = dq_clk_phase_match0_pre & 0xF;
@@ -397,7 +413,7 @@ static void set_dqs_parms(u32 wrlvl_start, u32 *final_wrlvl_delay)
 			dqs_dq_clk_phase_match_delta &= 0xF;
 
 			if (dqs_dq_clk_phase_match_delta > 3)
-				hang();
+				dqs_dq_clk_phase_match_delta = 1;
 		}
 
 		/* here we use start_wrlvl_delay_mod_offset_value[slice], phy_ctrl_reg4 and phy_ctrl_reg5 are related to DQ phase  */
