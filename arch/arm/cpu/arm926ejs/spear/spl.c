@@ -172,6 +172,14 @@ void lowlevel_init(void)
 
 	/* Enable IPs (release reset) */
 	writel(MISC_PERIPH_RST_ALL, &misc_p->periph1_rst);
+#if defined(CONFIG_ARCH_SPEAR3XX)
+	/*
+	 * On SPEAr3xx the reset signal from periph1_rst bit 26 is
+	 * propagated only enabling corresponding bit in periph1_clken
+	 */
+	writel(readl(&misc_p->periph1_clken) | MISC_USBHRENB,
+			&misc_p->periph1_clken);
+#endif
 
 	/* Initialize MPMC */
 	ddr_init();
