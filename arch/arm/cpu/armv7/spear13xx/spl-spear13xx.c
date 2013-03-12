@@ -80,15 +80,27 @@ void spear13xx_mpmc_init(u32 *mpmcbase, u32 reg_num)
 		;
 }
 
+void wait_time(void)
+{
+	u32 count;
+
+	for (count = 0; count < 1000000; count++)
+		nop();
+}
+
 void spear13xx_ddr_level(void)
 {
 #if defined(CONFIG_DDR2)
 	ddr2_lvl_write();
+	wait_time();
 	ddr2_lvl_read();
+	wait_time();
 	ddr2_lvl_gatetrn();
 #elif defined(CONFIG_DDR3)
 	ddr3_lvl_write();
+	wait_time();
 	ddr3_lvl_gatetrn();
+	wait_time();
 	ddr3_lvl_read();
 #endif
 }
