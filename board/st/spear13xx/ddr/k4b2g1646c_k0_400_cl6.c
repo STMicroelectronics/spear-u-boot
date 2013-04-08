@@ -24,7 +24,8 @@
 #include <common.h>
 #include <asm/arch/hardware.h>
 
-#if defined(CONFIG_SPEAR_DDRFREQ400)
+#if defined(CONFIG_DDR_K4B2G1646CK0) && \
+	defined(CONFIG_SPEAR_DDRFREQ400)
 const u32 mpmc_conf_vals[CONFIG_SPEAR_MPMCREGS] = {
 	0x00000100, /* MPMC_REG_00 0x00000100 */
 	0x00010100, /* MPMC_REG_01 0x00000100 */

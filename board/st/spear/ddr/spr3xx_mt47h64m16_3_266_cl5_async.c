@@ -24,7 +24,8 @@
 #include <common.h>
 #include <asm/arch/hardware.h>
 
-#if defined(CONFIG_ARCH_SPEAR3XX) && defined(CONFIG_SPEAR_DDR_PLL2)
+#if defined(CONFIG_ARCH_SPEAR3XX) && defined(CONFIG_SPEAR_DDR_PLL2) && \
+	defined(CONFIG_DDR_MT47H64M16)
 
 const u32 mpmc_conf_vals[CONFIG_SPEAR_MPMCREGS] = {
 	0x00000001,
