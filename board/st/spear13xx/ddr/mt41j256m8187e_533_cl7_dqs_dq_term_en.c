@@ -110,9 +110,9 @@ const u32 mpmc_conf_vals[CONFIG_SPEAR_MPMCREGS] = {
 	0x00440044, /* MPMC_REG_72 */
 	0x00080008, /* MPMC_REG_73 */
 	0x00000000, /* MPMC_REG_74 */
-	0xff005555, /* MPMC_REG_75 */
-	0xaaaa00ff, /* MPMC_REG_76 */
-	0xff005555, /* MPMC_REG_77 */
+	0xffffffff, /* MPMC_REG_75 */
+	0xffffffff, /* MPMC_REG_76 */
+	0xffffffff, /* MPMC_REG_77 */
 	0x00000007, /* MPMC_REG_78 */
 	0x00000000, /* MPMC_REG_79 */
 	0x00000000, /* MPMC_REG_80 */
