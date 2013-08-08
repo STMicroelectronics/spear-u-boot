@@ -480,9 +480,7 @@ int fsmc_nand_init(struct nand_chip *nand)
 			nand->ecc.correct = nand_correct_data;
 			break;
 		}
-	}
-
-	if (nand->ecc.mode == NAND_ECC_SOFT_BCH) {
+	} else {
 		uint oobeccsize, m;
 
 		/*
