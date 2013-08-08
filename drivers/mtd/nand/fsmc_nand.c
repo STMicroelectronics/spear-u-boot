@@ -454,6 +454,10 @@ int fsmc_nand_init(struct nand_chip *nand)
 	mtd = &nand_info[chip_nr++];
 	mtd->priv = nand;
 
+	/* Detect NAND chips */
+	if (nand_scan_ident(mtd, CONFIG_SYS_MAX_NAND_DEVICE, NULL))
+		return -ENXIO;
+
 	if (nand->ecc.mode != NAND_ECC_SOFT_BCH) {
 		switch (fsmc_version) {
 		case FSMC_VER8:
@@ -477,10 +481,6 @@ int fsmc_nand_init(struct nand_chip *nand)
 			break;
 		}
 	}
-
-	/* Detect NAND chips */
-	if (nand_scan_ident(mtd, CONFIG_SYS_MAX_NAND_DEVICE, NULL))
-		return -ENXIO;
 
 	if (nand->ecc.mode == NAND_ECC_SOFT_BCH) {
 		uint oobeccsize, m;
